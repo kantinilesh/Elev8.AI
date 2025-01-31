@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Career Roadmap Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .form-group .options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group .options label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #555;
+            font-weight: normal;
+        }
+
+        .form-group .options input[type="radio"] {
+            accent-color: #2563eb;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #1d4ed8;
+        }
+
+        button:disabled {
+            background-color: #93c5fd;
+            cursor: not-allowed;
+        }
+
+        .error {
+            background-color: #fee2e2;
+            border: 1px solid #ef4444;
+            color: #b91c1c;
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .error.visible {
+            display: block;
+        }
+
+        .result {
+            margin-top: 1.5rem;
+            text-align: left;
+        }
+
+        .result h2 {
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        .roadmap-text {
+            background-color: #f9f9f9;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+        .roadmap-text strong {
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        .roadmap-text ul {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+        }
+
+        .roadmap-text ul li {
+            margin-bottom: 0.5rem;
+        }
+
+        .roadmap-text ol {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+        }
+
+        .roadmap-text ol li {
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Career Roadmap Generator</h1>
+        <form id="interest-form">
+            <!-- Question 1 -->
+            <div class="form-group">
+                <label>What subjects do you enjoy the most?</label>
+                <div class="options">
+                    <label><input type="radio" name="q1" value="Art"> Art</label>
+                    <label><input type="radio" name="q1" value="Science"> Science</label>
+                    <label><input type="radio" name="q1" value="Mathematics"> Mathematics</label>
+                    <label><input type="radio" name="q1" value="Literature"> Literature</label>
+                </div>
+            </div>
+
+            <!-- Question 2 -->
+            <div class="form-group">
+                <label>How do you feel about problem-solving tasks or logical challenges? (Rate from 1-10)</label>
+                <div class="options">
+                    <label><input type="radio" name="q2" value="1"> 1 (Not at all)</label>
+                    <label><input type="radio" name="q2" value="5"> 5 (Neutral)</label>
+                    <label><input type="radio" name="q2" value="8"> 8 (Enjoy)</label>
+                    <label><input type="radio" name="q2" value="10"> 10 (Love it)</label>
+                </div>
+            </div>
+
+            <!-- Question 3 -->
+            <div class="form-group">
+                <label>Do you enjoy tasks that involve creativity, such as designing or storytelling?</label>
+                <div class="options">
+                    <label><input type="radio" name="q3" value="Designing"> Designing</label>
+                    <label><input type="radio" name="q3" value="Storytelling"> Storytelling</label>
+                    <label><input type="radio" name="q3" value="Both"> Both</label>
+                    <label><input type="radio" name="q3" value="Neither"> Neither</label>
+                </div>
+            </div>
+
+            <!-- Question 4 -->
+            <div class="form-group">
+                <label>How comfortable are you with working on numbers, statistics, or data analysis? (Rate from 1-10)</label>
+                <div class="options">
+                    <label><input type="radio" name="q4" value="1"> 1 (Not comfortable)</label>
+                    <label><input type="radio" name="q4" value="5"> 5 (Neutral)</label>
+                    <label><input type="radio" name="q4" value="8"> 8 (Comfortable)</label>
+                    <label><input type="radio" name="q4" value="10"> 10 (Very comfortable)</label>
+                </div>
+            </div>
+
+            <!-- Question 5 -->
+            <div class="form-group">
+                <label>Do you prefer working independently or as part of a team?</label>
+                <div class="options">
+                    <label><input type="radio" name="q5" value="Independently"> Independently</label>
+                    <label><input type="radio" name="q5" value="Team"> Team</label>
+                    <label><input type="radio" name="q5" value="Both"> Both</label>
+                    <label><input type="radio" name="q5" value="Depends"> Depends on the task</label>
+                </div>
+            </div>
+
+            <!-- Question 6 -->
+            <div class="form-group">
+                <label>Would you rather work on hands-on projects (e.g., robotics) or conceptual work (e.g., research)?</label>
+                <div class="options">
+                    <label><input type="radio" name="q6" value="Hands-on"> Hands-on</label>
+                    <label><input type="radio" name="q6" value="Conceptual"> Conceptual</label>
+                    <label><input type="radio" name="q6" value="Both"> Both</label>
+                    <label><input type="radio" name="q6" value="Neither"> Neither</label>
+                </div>
+            </div>
+
+            <!-- Question 7 -->
+            <div class="form-group">
+                <label>Which of these activities excites you the most?</label>
+                <div class="options">
+                    <label><input type="radio" name="q7" value="Coding or programming"> Coding or programming</label>
+                    <label><input type="radio" name="q7" value="Writing or blogging"> Writing or blogging</label>
+                    <label><input type="radio" name="q7" value="Designing graphics"> Designing graphics</label>
+                    <label><input type="radio" name="q7" value="Analyzing data"> Analyzing data</label>
+                </div>
+            </div>
+
+            <!-- Question 8 -->
+            <div class="form-group">
+                <label>What kind of impact do you want to create through your work?</label>
+                <div class="options">
+                    <label><input type="radio" name="q8" value="Build innovative tech"> Build innovative tech</label>
+                    <label><input type="radio" name="q8" value="Help others"> Help others</label>
+                    <label><input type="radio" name="q8" value="Create art"> Create art</label>
+                    <label><input type="radio" name="q8" value="Solve global problems"> Solve global problems</label>
+                </div>
+            </div>
+
+            <!-- Question 9 -->
+            <div class="form-group">
+                <label>Which career paths or technologies interest you?</label>
+                <div class="options">
+                    <label><input type="radio" name="q9" value="Game Design"> Game Design</label>
+                    <label><input type="radio" name="q9" value="Artificial Intelligence"> Artificial Intelligence</label>
+                    <label><input type="radio" name="q9" value="Data Science"> Data Science</label>
+                    <label><input type="radio" name="q9" value="Web Development"> Web Development</label>
+                </div>
+            </div>
+
+            <!-- Question 10 -->
+            <div class="form-group">
+                <label>What hobbies or activities do you pursue in your free time?</label>
+                <div class="options">
+                    <label><input type="radio" name="q10" value="Exploring apps"> Exploring apps</label>
+                    <label><input type="radio" name="q10" value="Reading books"> Reading books</label>
+                    <label><input type="radio" name="q10" value="Playing sports"> Playing sports</label>
+                    <label><input type="radio" name="q10" value="Watching movies"> Watching movies</label>
+                </div>
+            </div>
+
+            <div id="error-message" class="error"></div>
+            <button type="submit" id="submit-button">Generate Roadmap</button>
+        </form>
+
+        <!-- Result Section -->
+        <div id="result" class="result" style="display: none;">
+            <h2>Your Career Roadmap</h2>
+            <div id="roadmap-text" class="roadmap-text"></div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('interest-form');
+        const errorDiv = document.getElementById('error-message');
+        const resultDiv = document.getElementById('result');
+        const roadmapText = document.getElementById('roadmap-text');
+        const submitButton = document.getElementById('submit-button');
+
+        function showError(message) {
+            errorDiv.textContent = message;
+            errorDiv.classList.add('visible');
+        }
+
+        function hideError() {
+            errorDiv.textContent = '';
+            errorDiv.classList.remove('visible');
+        }
+
+        function setLoading(isLoading) {
+            submitButton.disabled = isLoading;
+            submitButton.textContent = isLoading ? 'Generating Roadmap...' : 'Generate Roadmap';
+        }
+
+        function showResult(text) {
+            // Replace Markdown bold (**) with HTML <strong> tags
+            const formattedText = text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold text
+                .replace(/\n/g, '<br>') // New lines
+                .replace(/- /g, '• '); // Bullet points
+
+            roadmapText.innerHTML = formattedText;
+            resultDiv.style.display = 'block';
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError();
+
+            // Collect all selected answers
+            const answers = {};
+            const questions = document.querySelectorAll('.form-group');
+            questions.forEach((question, index) => {
+                const selectedOption = question.querySelector('input[type="radio"]:checked');
+                if (!selectedOption) {
+                    showError(`Please answer question ${index + 1}`);
+                    return;
+                }
+                answers[`q${index + 1}`] = selectedOption.value;
+            });
+
+            if (Object.keys(answers).length !== 10) {
+                showError('Please answer all questions');
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                // Send the answers to the backend
+                const response = await fetch('/generate-roadmap', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(answers)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Display the generated roadmap
+                    showResult(data.roadmap_text);
+                } else {
+                    showError(data.error || 'Failed to generate roadmap. Please try again.');
+                }
+            } catch (error) {
+                showError('Failed to generate roadmap. Please try again.');
+            } finally {
+                setLoading(false);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Talk to PDF</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body class="bg-gray-950 min-h-screen flex items-center justify-center font-sans">
+    <div class="absolute inset-0 bg-[radial-gradient(circle_500px_at_50%_200px,#3e3e3e,transparent)]"></div>
+    
+    <div class="relative z-10 w-full max-w-md bg-gray-900 p-8 rounded-2xl shadow-2xl border border-gray-800">
+        <div class="text-center mb-6">
+            <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-teal-500 mb-2">
+                Talk to PDF
+            </h1>
+            <p class="text-gray-400">Upload and query your PDF document</p>
+        </div>
+
+        <!-- File Upload Form -->
+        <div class="mb-4">
+            <div class="flex items-center mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                </svg>
+                <label class="text-gray-300 font-semibold">Upload PDF</label>
+            </div>
+            <input 
+                type="file" 
+                id="pdf-upload" 
+                accept=".pdf" 
+                class="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-gray-300 
+                       file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0
+                       file:text-sm file:font-semibold file:bg-green-500 file:text-white
+                       hover:file:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500"
+            >
+        </div>
+
+        <!-- Question Input Form -->
+        <div class="mb-4">
+            <div class="flex items-center mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+                <label class="text-gray-300 font-semibold">Your Question</label>
+            </div>
+            <textarea 
+                id="question" 
+                placeholder="Ask a detailed question about your PDF..." 
+                class="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-gray-300 
+                       h-24 resize-none focus:outline-none focus:ring-2 focus:ring-green-500"
+            ></textarea>
+        </div>
+
+        <!-- Buttons for Uploading and Asking Question -->
+        <button 
+            id="upload-button" 
+            class="w-full py-3 bg-gradient-to-r from-green-500 to-teal-500 text-white 
+                   font-bold rounded-lg hover:from-green-600 hover:to-teal-600 
+                   transition-all transform hover:scale-105 focus:outline-none 
+                   focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+        >
+            Upload PDF
+        </button>
+
+        <button 
+            id="ask-button" 
+            class="w-full py-3 bg-gradient-to-r from-green-500 to-teal-500 text-white 
+                   font-bold rounded-lg hover:from-green-600 hover:to-teal-600 
+                   transition-all transform hover:scale-105 focus:outline-none 
+                   focus:ring-2 focus:ring-green-500 focus:ring-offset-2 mt-4"
+        >
+            Analyze PDF
+        </button>
+        
+        <!-- Response Section -->
+        <div 
+        id="response" 
+        class="mt-4 p-4 bg-gradient-to-r from-green-900/30 to-teal-900/30 
+               border border-green-800/50 rounded-lg text-gray-300 whitespace-pre-wrap"
+    >
+        Response will appear here...
+    </div>
+    </div>
+
+    <script>
+       document.getElementById("upload-button").addEventListener("click", async () => {
+    const fileInput = document.getElementById("pdf-upload");
+    const responseDiv = document.getElementById("response");
+
+    if (!fileInput.files.length) {
+        responseDiv.textContent = "Please upload a PDF file first.";
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", fileInput.files[0]);
+
+    try {
+        const uploadResponse = await fetch("/upload", {
+            method: "POST",
+            body: formData
+        });
+
+        if (!uploadResponse.ok) {
+            throw new Error("Failed to upload PDF");
+        }
+
+        const result = await uploadResponse.json();
+        responseDiv.textContent = result.message || "PDF uploaded successfully!";
+    } catch (error) {
+        responseDiv.textContent = `Error: ${error.message}`;
+    }
+});
+
+document.getElementById("ask-button").addEventListener("click", async () => {
+    const questionInput = document.getElementById("question");
+    const responseDiv = document.getElementById("response");
+
+    if (!questionInput.value.trim()) {
+        responseDiv.textContent = "Please enter a question.";
+        return;
+    }
+
+    responseDiv.textContent = "Processing your request...";
+
+    const requestData = {
+        question: questionInput.value.trim(),
+    };
+
+    try {
+        const response = await fetch("/ask", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(requestData)
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to process the question");
+        }
+
+        const result = await response.json();
+        // Convert Markdown to HTML using marked.js
+        responseDiv.innerHTML = marked.parse(result.response) || "No response received.";
+    } catch (error) {
+        responseDiv.textContent = `Error: ${error.message}`;
+    }
+});
+    </script>
+</body>
+</html>

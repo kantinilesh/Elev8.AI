@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Description Generator</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --background-color: #ecf0f1;
+            --text-color: #2c3e50;
+            --white: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 2rem auto;
+            background: var(--white);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-5px);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        input[type="file"] {
+            border: 2px dashed var(--primary-color);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        #result {
+            display: none;
+            background-color: #f7f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        #description {
+            font-style: italic;
+            color: var(--text-color);
+            line-height: 1.7;
+        }
+
+        #conversation {
+            background-color: #f7f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+        }
+
+        #messages {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+        }
+
+        .message {
+            margin-bottom: 0.75rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+        }
+
+        .user {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--primary-color);
+        }
+
+        .assistant {
+            background-color: rgba(46, 204, 113, 0.1);
+            color: var(--secondary-color);
+        }
+
+        #questionInput {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid #d3d3d3;
+            border-radius: 8px;
+        }
+
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 1rem auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #loading {
+            display: none;
+            text-align: center;
+        }
+
+        #voiceButton.listening {
+            background-color: #e74c3c;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                margin: 1rem;
+                padding: 1rem;
+                width: calc(100% - 2rem);
+            }
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="container">
+        <h1>Image Description Generator</h1>
+        <form id="uploadForm">
+            <input type="file" id="fileInput" accept="image/*" required>
+            <button type="submit">Upload and Describe</button>
+        </form>
+        <div id="loading">
+            <div class="loader"></div>
+            <p>Loading...</p>
+        </div>
+        <div id="result">
+            <h2>Description:</h2>
+            <p id="description"></p>
+            <audio id="audioPlayer" controls>
+                Your browser does not support the audio element.
+            </audio>
+        </div>
+        <div id="conversation">
+            <h2>Conversation:</h2>
+            <div id="messages"></div>
+            <input type="text" id="questionInput" placeholder="Ask a question about the image...">
+            <button id="askButton">Ask</button>
+            <button id="voiceButton">🎤 Speak</button>
+        </div>
+    </div>
+
+    <script>
+        const conversationDiv = document.getElementById("messages");
+        const questionInput = document.getElementById("questionInput");
+        const askButton = document.getElementById("askButton");
+        const voiceButton = document.getElementById("voiceButton");
+        const audioPlayer = document.getElementById("audioPlayer");
+        const loadingDiv = document.getElementById("loading");
+
+        // Declare recognition in the global scope
+        let recognition;
+
+        // Handle image upload
+        document.getElementById("uploadForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const fileInput = document.getElementById("fileInput");
+            const descriptionElement = document.getElementById("description");
+            const resultDiv = document.getElementById("result");
+
+            if (fileInput.files.length === 0) {
+                alert("Please select an image.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+
+            try {
+                loadingDiv.style.display = "block"; // Show loader
+                const response = await fetch("http://127.0.0.1:5000/upload", {
+                    method: "POST",
+                    body: formData,
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    descriptionElement.textContent = data.description;
+                    audioPlayer.src = data.audio_url;
+                    resultDiv.style.display = "block";
+                } else {
+                    alert(`Error: ${data.error}`);
+                }
+            } catch (error) {
+                alert("An error occurred. Please try again.");
+                console.error(error);
+            } finally {
+                loadingDiv.style.display = "none"; // Hide loader
+            }
+        });
+
+        // Handle text questions
+        askButton.addEventListener("click", async () => {
+            const question = questionInput.value.trim();
+            if (!question) {
+                alert("Please enter a question.");
+                return;
+            }
+
+            await askQuestion(question);
+        });
+
+        // Handle voice questions
+        voiceButton.addEventListener("click", () => {
+            if (!('webkitSpeechRecognition' in window)) {
+                alert("Your browser does not support speech recognition. Please use Chrome or Edge.");
+                return;
+            }
+
+            if (recognition && recognition.isListening) {
+                // Stop listening if already active
+                recognition.stop();
+                voiceButton.classList.remove("listening");
+                voiceButton.textContent = "🎤 Speak";
+                return;
+            }
+
+            // Initialize speech recognition
+            recognition = new (window.webkitSpeechRecognition || window.SpeechRecognition)();
+            recognition.continuous = false; // Stop after one sentence
+            recognition.interimResults = false; // Only final results
+            recognition.lang = "en-US"; // Set language
+
+            // Start listening
+            recognition.start();
+            voiceButton.classList.add("listening");
+            voiceButton.textContent = "Listening...";
+
+            // Handle speech recognition results
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                questionInput.value = transcript; // Set the transcribed text in the input field
+                askQuestion(transcript); // Automatically ask the question
+            };
+
+            // Handle errors
+            recognition.onerror = (event) => {
+                console.error("Speech recognition error:", event.error);
+                voiceButton.classList.remove("listening");
+                voiceButton.textContent = "🎤 Speak";
+                alert("Speech recognition failed. Please try again.");
+            };
+
+            // Stop listening when done
+            recognition.onend = () => {
+                voiceButton.classList.remove("listening");
+                voiceButton.textContent = "🎤 Speak";
+            };
+        });
+
+        // Function to ask a question
+        async function askQuestion(question) {
+            try {
+                loadingDiv.style.display = "block"; // Show loader
+
+                // Clear the input field after submitting the question
+                questionInput.value = "";
+
+                // Clear the conversation history
+                conversationDiv.innerHTML = "";
+
+                // Stop and clear the previous audio player
+                audioPlayer.pause();
+                audioPlayer.src = "";
+
+                const response = await fetch("http://127.0.0.1:5000/ask", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ question }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Display the question and response
+                    displayMessage(question, "user");
+                    displayMessage(data.response, "assistant");
+
+                    // Set the audio source but do not play it automatically
+                    audioPlayer.src = data.audio_url;
+                } else {
+                    alert(`Error: ${data.error}`);
+                }
+            } catch (error) {
+                alert("An error occurred. Please try again.");
+                console.error(error);
+            } finally {
+                loadingDiv.style.display = "none"; // Hide loader
+            }
+        }
+
+        // Function to display messages in the conversation
+        function displayMessage(text, role) {
+            const messageDiv = document.createElement("div");
+            messageDiv.classList.add("message", role);
+            messageDiv.textContent = text;
+            conversationDiv.appendChild(messageDiv);
+        }
+    </script>
+</body>
+
+</html>

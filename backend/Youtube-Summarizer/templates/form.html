@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Summary</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        }
+
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #1d4ed8;
+        }
+
+        button:disabled {
+            background-color: #93c5fd;
+            cursor: not-allowed;
+        }
+
+        .error {
+            background-color: #fee2e2;
+            border: 1px solid #ef4444;
+            color: #b91c1c;
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .error.visible {
+            display: block;
+        }
+
+        .result {
+            margin-top: 1.5rem;
+        }
+
+        .result img {
+            width: 100%;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .result h2 {
+            margin-top: 1rem;
+            color: #333;
+        }
+
+        .result ul {
+            margin-top: 0.5rem;
+            padding-left: 1.5rem;
+            color: #555;
+        }
+
+        .result ul li {
+            margin-bottom: 0.5rem;
+        }
+
+        .result strong {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <form id="youtube-form" method="POST">
+            <div class="form-group">
+                <label for="youtube-url">YouTube URL</label>
+                <input 
+                    type="text" 
+                    id="youtube-url" 
+                    placeholder="https://youtube.com/watch?v=..."
+                    required
+                >
+            </div>
+            <div id="error-message" class="error"></div>
+            <button type="submit" id="submit-button">Get Summary</button>
+        </form>
+
+        <!-- Result Section -->
+        <div id="result" class="result" style="display: none;">
+            <img id="thumbnail" src="" alt="Video Thumbnail">
+            <h2>Summary</h2>
+            <ul id="summary"></ul>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('youtube-form');
+        const input = document.getElementById('youtube-url');
+        const button = document.getElementById('submit-button');
+        const errorDiv = document.getElementById('error-message');
+        const resultDiv = document.getElementById('result');
+        const summaryElement = document.getElementById('summary');
+        const thumbnailElement = document.getElementById('thumbnail');
+
+        function isValidYouTubeUrl(url) {
+            const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
+            return youtubeRegex.test(url);
+        }
+
+        function showError(message) {
+            errorDiv.textContent = message;
+            errorDiv.classList.add('visible');
+        }
+
+        function hideError() {
+            errorDiv.textContent = '';
+            errorDiv.classList.remove('visible');
+        }
+
+        function setLoading(isLoading) {
+            button.disabled = isLoading;
+            button.textContent = isLoading ? 'Getting Summary...' : 'Get Summary';
+        }
+
+        function showResult(summary, thumbnailUrl) {
+            // Convert the summary text into an array of bullet points
+            const bulletPoints = summary.split('\n').filter(point => point.trim() !== '');
+            summaryElement.innerHTML = bulletPoints.map(point => {
+                // Replace **bold** text with <strong> tags
+                const formattedPoint = point.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                return `<li>${formattedPoint}</li>`;
+            }).join('');
+            thumbnailElement.src = thumbnailUrl;
+            resultDiv.style.display = 'block';
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError();
+
+            const url = input.value.trim();
+
+            if (!url) {
+                showError('Please enter a YouTube URL');
+                return;
+            }
+
+            if (!isValidYouTubeUrl(url)) {
+                showError('Please enter a valid YouTube URL');
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                // Send the YouTube URL to the Flask backend
+                const response = await fetch('/summarize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ youtube_link: url })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Display the result
+                    showResult(data.summary, data.thumbnail_url);
+                } else {
+                    showError(data.error || 'Failed to get summary. Please try again.');
+                }
+            } catch (error) {
+                showError('Failed to get summary. Please try again.');
+            } finally {
+                setLoading(false);
+            }
+        });
+    </script>
+</body>
+</html>
